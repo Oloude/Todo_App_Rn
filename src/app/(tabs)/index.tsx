@@ -1,21 +1,76 @@
+import { createHomeStyles } from "@/assets/styles/home.styles";
+import Header from "@/components/Header";
+import TodoInput from "@/components/TodoInput";
 import useTheme from "@/hooks/useTheme";
-import { Link } from "expo-router";
-import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
+import { useMutation, useQuery } from "convex/react";
+import { LinearGradient } from "expo-linear-gradient";
+import { FlatList, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { api } from "../../../convex/_generated/api";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { Doc } from "../../../convex/_generated/dataModel";
+import { Ionicons } from "@expo/vector-icons";
+
+type Todo = Doc<"todos">;
 
 export default function Index() {
-  const {toggleDarkMode} = useTheme()
-  return (
-    <View style={styles.container}>
-      <Text>Edit src/app/index.tsx to edit this screen123456.</Text>
-      <TouchableOpacity onPress={toggleDarkMode}><Text>toggle theme</Text></TouchableOpacity>
+  const { toggleDarkMode, colors } = useTheme();
+
+  const homeStyles = createHomeStyles(colors);
+
+  const todos = useQuery(api.todos.getTodos)
+
+  const isLoading = todos === undefined
+
+  if(isLoading) <LoadingSpinner/>
+
+  const handleToggleTodo = useMutation(api.todos.toggleTodo)
+
+  const renderTodoItem =  ({ item }: { item: Todo }) => {
+    return <View style={homeStyles.todoItemWrapper}>
+      <LinearGradient colors={colors.gradients.surface}
+          style={homeStyles.todoItem}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}>
+             <TouchableOpacity
+            style={homeStyles.checkbox}
+            activeOpacity={0.7}
+            onPress={() => handleToggleTodo({id : item._id})}
+          >
+            <LinearGradient
+              colors={item.isCompleted ? colors.gradients.success : colors.gradients.muted}
+              style={[
+                homeStyles.checkboxInner,
+                { borderColor: item.isCompleted ? "transparent" : colors.border },
+              ]}
+            >
+              {item.isCompleted && <Ionicons name="checkmark" size={18} color="#fff" />}
+            </LinearGradient>
+          </TouchableOpacity>
+
+      </LinearGradient>
+
     </View>
+  }
+
+
+  return (
+    <LinearGradient
+      colors={colors.gradients.background}
+      style={homeStyles.container}
+    >
+      <StatusBar barStyle={colors.statusBarStyle} />
+      <SafeAreaView style={homeStyles.safeArea}>
+        <Header/>
+        <TodoInput/>
+        <FlatList
+        data={todos}
+        renderItem={renderTodoItem }
+        keyExtractor={(item) => item._id}
+        style={homeStyles.todoList}
+        contentContainerStyle={homeStyles.todoListContent}
+        />
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

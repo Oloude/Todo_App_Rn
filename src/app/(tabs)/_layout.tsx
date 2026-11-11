@@ -30,7 +30,7 @@ const TabsLayout = () => {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'Todos',
           tabBarIcon: ({ color, size }) => (
             <Ionicons
               name="flash-outline"
